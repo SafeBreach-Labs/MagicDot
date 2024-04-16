@@ -3,12 +3,12 @@ from magic_dot.file_utils import nt_path
 
 def create_inoperable_file_from_args(args):
     inoperable_file_path = create_inoperable_file(args.parent_dir_path, args.copy_from)
-    print(f"Inoperable file was created. From now on you can access the file using the following path:\n\"{inoperable_file_path}\" (Notice the space character at the end) or using Cygwin's tools that use NT paths by default")
+    print(f"Inoperable file was created. From now on you can access the file using the following path:\n\"{inoperable_file_path}\" or using Cygwin's tools that use NT paths by default")
 
 
 def create_inoperable_dir_from_args(args):
     inoperable_dir_path = create_inoperable_dir(args.parent_dir_path, args.copy_from)
-    print(f"Inoperable directory was created. From now on you can access the directory using the following path:\n\"{inoperable_dir_path}\" (Notice the space character at the end) or using Cygwin's tools that use NT paths by default")
+    print(f"Inoperable directory was created. From now on you can access the directory using the following path:\n\"{inoperable_dir_path}\" or using Cygwin's tools that use NT paths by default")
 
 
 def create_impersonated_file_from_args(args):
