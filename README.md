@@ -17,7 +17,7 @@ Implements MagicDot's rootkit-like techniques:
 ### MagicDot Python Package Installation
 1. Clone the repo
 2. Install it locally:
-```cmd
+```
 pip install <cloned repo path>
 ```
 
@@ -25,7 +25,7 @@ pip install <cloned repo path>
 Inside the `tools` folder you'll find the `magic_dot_cli` tool along with 3 different solo scripts that implement the exploits of vulnerabilities `CVE-2023-36396`, `CVE-2023-32054`, and a third unfixed Deletion EoP vulnerability.
 
 ### magic_dot_cli Usage
-```cmd
+```
 python .\tools\magic_dot_cli\magic_dot_cli.py -h
 usage: magic_dot_cli.py [-h]
                         {CREATE_IMPERSONATED_PROCESS,CREATE_INOPERABLE_FILE,CREATE_INOPERABLE_DIR,CREATE_IMPERSONATED_FILE,CREATE_IMPERSONATED_DIR,ADD_INVISIBLE_FILE_INTO_ZIP,DISABLE_PROCEXP}
@@ -58,12 +58,12 @@ command:
 ```
 
 For more help per each command use `-h` for the specific command. For Example:
-```cmd
+```
 python .\tools\magic_dot_cli\magic_dot_cli.py CREATE_IMPERSONATED_PROCESS -h
 ```
 
 ### prepare_archive_rce_exploit Usage
-```cmd
+```
 python .\tools\prepare_archive_rce_exploit.py -h
 usage: prepare_archive_rce_exploit.py [-h] [--target-dir-relative TARGET_DIR_RELATIVE]
                                       files_to_write_paths [files_to_write_paths ...]     
@@ -89,7 +89,7 @@ optional arguments:
 ```
 
 ### prepare_shadow_copy_restoration_write_exploit Usage
-```cmd
+```
 python .\tools\prepare_archive_rce_exploit.py -h
 usage: prepare_archive_rce_exploit.py [-h] [--target-dir-relative TARGET_DIR_RELATIVE]
                                       files_to_write_paths [files_to_write_paths ...]     
@@ -115,7 +115,7 @@ optional arguments:
 ```
 
 ### prepare_delete_dir_exploit Usage
-```cmd
+```
 python .\tools\prepare_delete_dir_exploit.py -h
 usage: prepare_delete_dir_exploit.py [-h] target_dir
 
