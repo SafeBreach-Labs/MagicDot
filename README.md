@@ -22,11 +22,17 @@ pip install <cloned repo path>
 ```
 
 ## MagicDot Tools
-Inside the `tools` folder you'll find the `magic_dot_cli` tool along with 3 different solo scripts that implement the exploits of vulnerabilities `CVE-2023-36396`, `CVE-2023-32054`, and a third unfixed Deletion EoP vulnerability.
+Inside the `tools` folder you'll find the `magic_dot_cli` tool (dependent on the MagicDot Python package) along with 3 different solo scripts that implement the exploits for vulnerabilities `CVE-2023-36396`, `CVE-2023-32054`, and a third unfixed Deletion EoP vulnerability. During the installation of the MagicDot Python package, the requirements for these scripts are installed as well.
+
+For convenience purposes, it is recommended to pack magic_dot_cli into an executable using Pyinstaller:
+```
+cd tools\magic_dot_cli\
+pyinstaller --onefile magic_dot_cli.py
+```
 
 ### magic_dot_cli Usage
 ```
-python .\tools\magic_dot_cli\magic_dot_cli.py -h
+python magic_dot_cli.py -h
 usage: magic_dot_cli.py [-h]
                         {CREATE_IMPERSONATED_PROCESS,CREATE_INOPERABLE_FILE,CREATE_INOPERABLE_DIR,CREATE_IMPERSONATED_FILE,CREATE_IMPERSONATED_DIR,ADD_INVISIBLE_FILE_INTO_ZIP,DISABLE_PROCEXP}
                         ...
@@ -59,12 +65,12 @@ command:
 
 For more help per each command use `-h` for the specific command. For Example:
 ```
-python .\tools\magic_dot_cli\magic_dot_cli.py CREATE_IMPERSONATED_PROCESS -h
+python magic_dot_cli.py CREATE_IMPERSONATED_PROCESS -h
 ```
 
-### prepare_archive_rce_exploit Usage
+### prepare_archive_rce_exploit Usage (CVE-2023-36396)
 ```
-python .\tools\prepare_archive_rce_exploit.py -h
+python prepare_archive_rce_exploit.py -h
 usage: prepare_archive_rce_exploit.py [-h] [--target-dir-relative TARGET_DIR_RELATIVE]
                                       files_to_write_paths [files_to_write_paths ...]     
                                       out_archive_path
@@ -88,9 +94,9 @@ optional arguments:
                         the destination folder of the executables
 ```
 
-### prepare_shadow_copy_restoration_write_exploit Usage
+### prepare_shadow_copy_restoration_write_exploit Usage (CVE-2023-36396)
 ```
-python .\tools\prepare_archive_rce_exploit.py -h
+python prepare_archive_rce_exploit.py -h
 usage: prepare_archive_rce_exploit.py [-h] [--target-dir-relative TARGET_DIR_RELATIVE]
                                       files_to_write_paths [files_to_write_paths ...]     
                                       out_archive_path
@@ -116,7 +122,7 @@ optional arguments:
 
 ### prepare_delete_dir_exploit Usage
 ```
-python .\tools\prepare_delete_dir_exploit.py -h
+python prepare_delete_dir_exploit.py -h
 usage: prepare_delete_dir_exploit.py [-h] target_dir
 
 Exploits a "won't fixed" deletion EoP vulnerability triggered by a privileged user
