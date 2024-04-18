@@ -1,5 +1,9 @@
 # MagicDot
-A set of rootkit-like abilities for unprivileged users, and vulnerabilities based on the DOT-to-NT path conversion known issue
+A set of rootkit-like abilities for unprivileged users, and vulnerabilities based on the DOT-to-NT path conversion known issue.
+
+Presented at Black Hat Asia 2024 under the title - [**MagicDot: A Hacker's Magic Show of Disappearing Dots and Spaces**](https://www.blackhat.com/asia-24/briefings/schedule/#magicdot-a-hackers-magic-show-of-disappearing-dots-and-spaces-36561)
+
+For a deeper understanding of the research, read this blog post - [**MagicDot: A Hacker's Magic Show of Disappearing Dots and Spaces**](https://www.safebreach.com/blog/magicdot-a-hackers-magic-show-of-disappearing-dots-and-spaces/)
 
 <div align="center">
 <img src="./images/magician-w-md-logo-KO-white.png" width="50%"/>
@@ -7,7 +11,7 @@ A set of rootkit-like abilities for unprivileged users, and vulnerabilities base
 
 ## MagicDot Python Package
 Implements MagicDot's rootkit-like techniques:
-* Files/Directories named only with dots
+* Files/Directories named with dots only
   * Bonus - Such Directories prevent any shadow copy restoration of any parent directory of the inoperable directory
 * Inoperable Files/Directories
 * Impersonated Files/Directories
