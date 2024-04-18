@@ -94,30 +94,28 @@ optional arguments:
                         the destination folder of the executables
 ```
 
-### prepare_shadow_copy_restoration_write_exploit Usage (CVE-2023-36396)
+### prepare_shadow_copy_restoration_write_exploit Usage (CVE-2023-32054)
 ```
-python prepare_archive_rce_exploit.py -h
-usage: prepare_archive_rce_exploit.py [-h] [--target-dir-relative TARGET_DIR_RELATIVE]
-                                      files_to_write_paths [files_to_write_paths ...]     
-                                      out_archive_path
+python .\prepare_shadow_copy_restoration_write_exploit.py -h
+usage: prepare_shadow_copy_restoration_write_exploit.py [-h] -target-dir TARGET_DIR
+                                                        (-replacing-dir REPLACING_DIR | -remove-dir)
 
-Exploits CVE-2023-36396. Crafts a malicious archive that exploits Windows File Explorer   
-to extract a file to an arbitrary relative path. The default relative path is set to      
-point from the Downloads directory to the user's Startup folder
-
-positional arguments:
-  files_to_write_paths  File paths separated by spaces. These files are the files which   
-                        will be written to the chosen victim's directory
-  out_archive_path      Path to the archive to be created that will contain the exploit.  
-                        the type of the archive will be determined based on the file      
-                        extension provided. Supported types: .tar|.tar.gz|.tar.gzip|.tar  
-                        .xz|.tar.bz2|.tar.bzip2|.tar.zst|.tar.zstd|.7z|.7zip
+Exploits CVE-2023-32054
 
 optional arguments:
   -h, --help            show this help message and exit
-  --target-dir-relative TARGET_DIR_RELATIVE
-                        A relative path from the victim's estimated extraction folder to  
-                        the destination folder of the executables
+  -target-dir TARGET_DIR
+                        The target directory to try to overwrite its files. The
+                        directory is vulnerable if an unprivileged user is allowed to
+                        create a new directory its parent directory
+  -replacing-dir REPLACING_DIR
+                        The directory that contains files with the same names in the
+                        same structure of the target dir but with the new desired
+                        content
+  -remove-dir           Delete the directory created a part of the exploit in an       
+                        earlier point in time. This is recommended to be done after a  
+                        shadow copy was taken by an admin, while the directory
+                        existed
 ```
 
 ### prepare_delete_dir_exploit Usage
