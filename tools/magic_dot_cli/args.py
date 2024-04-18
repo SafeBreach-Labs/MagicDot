@@ -5,13 +5,15 @@ class ArgsCommands(Enum):
     """
     Possible arguments commands.
     """
-    CREATE_INOPERABLE_FILE = 0,
-    CREATE_INOPERABLE_DIR = 1,
-    CREATE_IMPERSONATED_FILE = 2,
-    CREATE_IMPERSONATED_DIR = 3,
-    CREATE_IMPERSONATED_PROCESS = 4,
-    ADD_INVISIBLE_FILE_INTO_ZIP = 5,
+    CREATE_INOPERABLE_FILE = 0
+    CREATE_INOPERABLE_DIR = 1
+    CREATE_IMPERSONATED_FILE = 2
+    CREATE_IMPERSONATED_DIR = 3
+    CREATE_IMPERSONATED_PROCESS = 4
+    ADD_INVISIBLE_FILE_INTO_ZIP = 5
     DISABLE_PROCEXP = 6
+    CREATE_DOTS_FILE = 7
+    CREATE_DOTS_DIR = 8
 
 def parse_args():
     parser = argparse.ArgumentParser(description="An unprivileged rootkit-like tool")
@@ -21,13 +23,21 @@ def parse_args():
     impersonate_proc_parser.add_argument("-exe-path", type=str, required=True, help="Path to the executable to run")
     impersonate_proc_parser.add_argument("-impersonate-to", type=str, required=True, help="Path to the executable that the process should impersonate to")
 
-    inoperable_file_parser = commands_subparsers.add_parser(ArgsCommands.CREATE_INOPERABLE_FILE.name, help="Create an inoperable file. This file also can't be deleted by Windows Defender")
+    inoperable_file_parser = commands_subparsers.add_parser(ArgsCommands.CREATE_INOPERABLE_FILE.name, help="Create an inoperable file")
     inoperable_file_parser.add_argument("-parent-dir-path", type=str, required=True, help="Path to the directory to create the inoperable file in")
     inoperable_file_parser.add_argument("-copy-from", type=str, help="Path to a file that contains content to write into the inoperable file")
 
     inoperable_dir_parser = commands_subparsers.add_parser(ArgsCommands.CREATE_INOPERABLE_DIR.name, help="Create an inoperable directory")
     inoperable_dir_parser.add_argument("-parent-dir-path", type=str, required=True, help="Path to the directory to create the inoperable directory in")
     inoperable_dir_parser.add_argument("-copy-from", type=str, help="Path to a directory that contains files to copy into the inoperable directory")
+
+    dots_file_parser = commands_subparsers.add_parser(ArgsCommands.CREATE_DOTS_FILE.name, help="Create a dots file")
+    dots_file_parser.add_argument("-parent-dir-path", type=str, required=True, help="Path to the directory to create the dots file in")
+    dots_file_parser.add_argument("-copy-from", type=str, help="Path to a file that contains content to write into the dots file")
+
+    dots_dir_parser = commands_subparsers.add_parser(ArgsCommands.CREATE_DOTS_DIR.name, help="Create a dots directory")
+    dots_dir_parser.add_argument("-parent-dir-path", type=str, required=True, help="Path to the directory to create the dots directory in")
+    dots_dir_parser.add_argument("-copy-from", type=str, help="Path to a directory that contains files to copy into the dots directory")
 
     impersonated_file_parser = commands_subparsers.add_parser(ArgsCommands.CREATE_IMPERSONATED_FILE.name, help="Create a file that impersonates a different file")
     impersonated_file_parser.add_argument("-target-file", type=str, required=True, help="Path to the file that the new file impersonates to")

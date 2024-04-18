@@ -7,8 +7,9 @@ A set of rootkit-like abilities for unprivileged users, and vulnerabilities base
 
 ## MagicDot Python Package
 Implements MagicDot's rootkit-like techniques:
+* Files/Directories named only with dots
+  * Bonus - Such Directories prevent any shadow copy restoration of any parent directory of the inoperable directory
 * Inoperable Files/Directories
-  * Bonus - Inoperable Directories prevent any shadow copy restoration of any parent directory of the inoperable directory
 * Impersonated Files/Directories
 * Impersonated Process
 * Process Explorer DoS Vulnerability - `CVE-2023-42757`
@@ -32,9 +33,9 @@ pyinstaller --onefile magic_dot_cli.py
 
 ### magic_dot_cli Usage
 ```
-python magic_dot_cli.py -h
+python .\magic_dot_cli.py -h
 usage: magic_dot_cli.py [-h]
-                        {CREATE_IMPERSONATED_PROCESS,CREATE_INOPERABLE_FILE,CREATE_INOPERABLE_DIR,CREATE_IMPERSONATED_FILE,CREATE_IMPERSONATED_DIR,ADD_INVISIBLE_FILE_INTO_ZIP,DISABLE_PROCEXP}
+                        {CREATE_IMPERSONATED_PROCESS,CREATE_INOPERABLE_FILE,CREATE_INOPERABLE_DIR,CREATE_DOTS_FILE,CREATE_DOTS_DIR,CREATE_IMPERSONATED_FILE,CREATE_IMPERSONATED_DIR,ADD_INVISIBLE_FILE_INTO_ZIP,DISABLE_PROCEXP}
                         ...
 
 An unprivileged rootkit-like tool
@@ -43,14 +44,16 @@ optional arguments:
   -h, --help            show this help message and exit
 
 command:
-  {CREATE_IMPERSONATED_PROCESS,CREATE_INOPERABLE_FILE,CREATE_INOPERABLE_DIR,CREATE_IMPERSONATED_FILE,CREATE_IMPERSONATED_DIR,ADD_INVISIBLE_FILE_INTO_ZIP,DISABLE_PROCEXP}
+  {CREATE_IMPERSONATED_PROCESS,CREATE_INOPERABLE_FILE,CREATE_INOPERABLE_DIR,CREATE_DOTS_FILE,CREATE_DOTS_DIR,CREATE_IMPERSONATED_FILE,CREATE_IMPERSONATED_DIR,ADD_INVISIBLE_FILE_INTO_ZIP,DISABLE_PROCEXP}
     CREATE_IMPERSONATED_PROCESS
                         Create a process that impersonates a different process. Both Task Manager and Process Explorer will display    
                         information about the target process to impersonate to
     CREATE_INOPERABLE_FILE
-                        Create an inoperable file. This file also can't be deleted by Windows Defender
+                        Create an inoperable file
     CREATE_INOPERABLE_DIR
                         Create an inoperable directory
+    CREATE_DOTS_FILE    Create a dots file
+    CREATE_DOTS_DIR     Create a dots directory
     CREATE_IMPERSONATED_FILE
                         Create a file that impersonates a different file
     CREATE_IMPERSONATED_DIR
