@@ -94,7 +94,7 @@ optional arguments:
                         the destination folder of the executables
 ```
 
-### prepare_shadow_copy_restoration_write_exploit Usage (CVE-2023-36396)
+### prepare_shadow_copy_restoration_write_exploit Usage (CVE-2023-32054)
 ```
 python .\prepare_shadow_copy_restoration_write_exploit.py -h
 usage: prepare_shadow_copy_restoration_write_exploit.py [-h] -target-dir TARGET_DIR
